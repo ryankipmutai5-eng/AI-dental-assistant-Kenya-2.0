@@ -1234,10 +1234,33 @@ We look forward to seeing you! 🦷<br>
   }
 
   function showPatientProfile(id) {
-    const page = ce('div', 'dashboard-page');
+    // Navigate to patients page, then show the profile inline
+    const wrapper = ce('div');
+    wrapper.appendChild(renderPatientProfile(id));
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+    app.className = 'fade-in';
 
-    const sidebar = document.querySelector('.sidebar');
-    const sidebarHTML = sidebar ? sidebar.innerHTML : '';
+    // Build full dashboard page with sidebar
+    const sidebarItems = [
+      { page: 'patients', icon: 'fa-users', label: 'Patients' },
+      { page: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
+      { page: 'appointments', icon: 'fa-calendar-check', label: 'Appointments' },
+      { page: 'billing', icon: 'fa-coins', label: 'Billing' },
+      { page: 'campaigns', icon: 'fa-megaphone', label: 'Campaigns' },
+      { page: 'ai-assistant', icon: 'fa-robot', label: 'AI Assistant' },
+      { page: 'settings', icon: 'fa-cog', label: 'Settings' },
+    ];
+
+    const page = ce('div', 'dashboard-page');
+    let sidebarHTML = `<div class="sidebar"><div class="sidebar-logo"><span>D</span>entalAI</div><nav class="sidebar-nav">`;
+    sidebarItems.forEach(item => {
+      sidebarHTML += `<a href="#" onclick="DentalAI.navigate('${item.page}')">
+        <i class="fas ${item.icon}"></i><span>${item.label}</span>
+      </a>`;
+    });
+    sidebarHTML += `</nav></div>`;
+    page.innerHTML = sidebarHTML;
 
     const main = ce('div', 'main-content');
     const topBar = ce('div', 'top-bar');
@@ -1254,10 +1277,7 @@ We look forward to seeing you! 🦷<br>
     const content = ce('div', 'page-content');
     content.appendChild(renderPatientProfile(id));
     main.appendChild(content);
-
     page.appendChild(main);
-    const app = document.getElementById('app');
-    app.innerHTML = '';
     app.appendChild(page);
   }
 
@@ -1309,4 +1329,9 @@ We look forward to seeing you! 🦷<br>
 })();
 
 // Initialize on DOM ready
-document.addEventListener('DOMContentLoaded', () => DentalAI.init());
+document.addEventListener('DOMContentLoaded', () => DentalAI.init());/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
