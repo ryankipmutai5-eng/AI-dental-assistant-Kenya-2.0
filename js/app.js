@@ -34,7 +34,7 @@ const DentalAI = (() => {
     { name: 'John Kamau', age: 38, phone: '+254 789 012 345', lastVisit: '20 Feb 2026', visits: 9, id: 8 },
   ];
 
-  const invoices = [
+  let invoices = [
     { id: 'INV-001', patient: 'Grace Wanjiku', treatment: 'Cleaning', amount: 'KES 2,500', method: 'M-Pesa', status: 'paid', date: '12 Mar 2026' },
     { id: 'INV-002', patient: 'James Omondi', treatment: 'Filling', amount: 'KES 4,000', method: 'Cash', status: 'paid', date: '10 Mar 2026' },
     { id: 'INV-003', patient: 'Sarah Nyambura', treatment: 'Extraction', amount: 'KES 6,000', method: 'M-Pesa', status: 'pending', date: '08 Mar 2026' },
@@ -42,6 +42,17 @@ const DentalAI = (() => {
     { id: 'INV-005', patient: 'Faith Njeri', treatment: 'Whitening', amount: 'KES 8,000', method: 'M-Pesa', status: 'overdue', date: '01 Mar 2026' },
     { id: 'INV-006', patient: 'David Mwangi', treatment: 'Cleaning', amount: 'KES 2,500', method: 'M-Pesa', status: 'pending', date: '28 Feb 2026' },
   ];
+
+  // Messages data (contact form, chat, SMS)
+  let messages = [
+    { id: 1, name: 'Margaret Chebet', email: 'margaret@email.com', phone: '+254 712 111 222', message: 'I would like to book a cleaning appointment for next Tuesday morning. Please let me know available slots.', date: '24 Mar 2026', source: 'Contact Form', status: 'new', reply: null },
+    { id: 2, name: 'Kevin Ochieng', email: 'kevin@email.com', phone: '+254 723 333 444', message: 'Hi, I have a toothache that has been bothering me for 3 days. Can I get an emergency appointment today?', date: '23 Mar 2026', source: 'Chat', status: 'read', reply: 'Dear Kevin, we have an emergency slot available at 2:00 PM today. Please come in. - Dr. Kamau' },
+    { id: 3, name: 'Susan Wairimu', phone: '+254 734 555 666', message: 'Reminder confirmed. Will attend my 10AM appointment tomorrow.', date: '22 Mar 2026', source: 'SMS', status: 'read', reply: null },
+    { id: 4, name: 'Patrick Muthui', email: 'patrick@email.com', phone: '+254 745 777 888', message: 'I need to reschedule my appointment from Friday to Monday next week. Is that possible?', date: '21 Mar 2026', source: 'Contact Form', status: 'new', reply: null },
+    { id: 5, name: 'Jane Wanjeri', phone: '+254 756 999 000', message: 'How much does a teeth whitening procedure cost?', date: '20 Mar 2026', source: 'Chat', status: 'read', reply: 'Hi Jane, our whitening procedure is KES 8,000. We offer a 10% discount for first-time patients. - Dr. Kamau' },
+  ];
+
+  let notificationCount = messages.filter(m => m.status === 'new').length + 3; // 3 existing + new messages
 
   // ---------- Emergency Keywords ----------
   const EMERGENCY_KEYWORDS = [
@@ -64,21 +75,127 @@ const DentalAI = (() => {
     app.className = 'fade-in';
 
     switch (state.currentPage) {
+      // Public pages
       case 'landing': app.appendChild(renderLanding()); break;
       case 'login': app.appendChild(renderAuth('login')); break;
       case 'register': app.appendChild(renderAuth('register')); break;
       case 'onboarding': app.appendChild(renderOnboarding()); break;
+      case 'contact': app.appendChild(renderPublicLayout('contact')); break;
+      case 'book-appointment': app.appendChild(renderPublicLayout('book-appointment')); break;
+      case 'chat': app.appendChild(renderPublicLayout('chat')); break;
+      case 'privacy': app.appendChild(renderLegal('privacy')); break;
+      case 'terms': app.appendChild(renderLegal('terms')); break;
+      // Dashboard pages
       case 'dashboard': app.appendChild(renderDashboardLayout('dashboard')); break;
       case 'appointments': app.appendChild(renderDashboardLayout('appointments')); break;
       case 'patients': app.appendChild(renderDashboardLayout('patients')); break;
       case 'billing': app.appendChild(renderDashboardLayout('billing')); break;
-      case 'ai-assistant': app.appendChild(renderDashboardLayout('ai-assistant')); break;
       case 'campaigns': app.appendChild(renderDashboardLayout('campaigns')); break;
+      case 'messages': app.appendChild(renderDashboardLayout('messages')); break;
+      case 'ai-assistant': app.appendChild(renderDashboardLayout('ai-assistant')); break;
       case 'settings': app.appendChild(renderDashboardLayout('settings')); break;
-      case 'privacy': app.appendChild(renderLegal('privacy')); break;
-      case 'terms': app.appendChild(renderLegal('terms')); break;
       default: app.appendChild(renderLanding());
     }
+  }
+
+  // ============================================================
+  // PUBLIC LAYOUT (header/footer for public pages)
+  // ============================================================
+
+  function renderPublicLayout(page) {
+    const wrapper = ce('div');
+    wrapper.innerHTML = `
+      <nav class="landing-nav">
+        <div class="nav-logo"><span>Dental</span>AI</div>
+        <div class="nav-links">
+          <a href="#" onclick="DentalAI.navigate('landing')">Home</a>
+          <a href="#" onclick="DentalAI.navigate('contact')">Contact</a>
+          <a href="#" onclick="DentalAI.navigate('chat')">Chat with Clinic</a>
+          <a href="#" onclick="DentalAI.navigate('login')">Login</a>
+          <button class="btn btn-primary" onclick="DentalAI.navigate('register')">Get Started</button>
+        </div>
+      </nav>
+    `;
+
+    const content = ce('div');
+    let innerHTML = '';
+
+    if (page === 'contact') {
+      innerHTML = `
+        <div style="max-width:700px;margin:60px auto;padding:0 24px">
+          <h1 style="font-size:36px;font-weight:800;margin-bottom:8px">Contact Us</h1>
+          <p style="color:var(--gray-500);margin-bottom:32px">Have a question or need to reach the clinic? Send us a message and we'll get back to you within 24 hours.</p>
+          <div class="card" style="padding:32px">
+            <div class="form-group"><label>Full Name</label><input type="text" id="contactName" placeholder="Your full name" /></div>
+            <div class="form-group"><label>Email Address</label><input type="email" id="contactEmail" placeholder="your@email.com" /></div>
+            <div class="form-group"><label>Phone Number</label><input type="tel" id="contactPhone" placeholder="+254 7XX XXX XXX" /></div>
+            <div class="form-group"><label>Message</label><textarea id="contactMsg" placeholder="How can we help you?" rows="4"></textarea></div>
+            <button class="btn btn-primary" onclick="DentalAI.submitContact()"><i class="fas fa-paper-plane"></i> Send Message</button>
+            <div id="contactSuccess" style="display:none;margin-top:16px;padding:16px;background:var(--green-100);border-radius:8px;color:#166534">
+              <i class="fas fa-check-circle"></i> Your message has been sent. We'll respond within 24 hours.
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (page === 'book-appointment') {
+      innerHTML = `
+        <div style="max-width:600px;margin:60px auto;padding:0 24px">
+          <h1 style="font-size:36px;font-weight:800;margin-bottom:8px">Book an Appointment</h1>
+          <p style="color:var(--gray-500);margin-bottom:32px">Fill in the form below and we'll confirm your appointment.</p>
+          <div class="card" style="padding:32px">
+            <div class="form-group"><label>Full Name</label><input type="text" id="bookName" placeholder="Your full name" /></div>
+            <div class="form-group"><label>Phone Number</label><input type="tel" id="bookPhone" placeholder="+254 7XX XXX XXX" /></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div class="form-group"><label>Preferred Date</label><input type="date" id="bookDate" /></div>
+              <div class="form-group"><label>Preferred Time</label><input type="time" id="bookTime" /></div>
+            </div>
+            <div class="form-group"><label>Treatment</label>
+              <select id="bookTreatment"><option>Cleaning</option><option>Extraction</option><option>Filling</option><option>Whitening</option><option>Consultation</option><option>Check-up</option></select>
+            </div>
+            <button class="btn btn-primary" onclick="DentalAI.submitBooking()"><i class="fas fa-calendar-check"></i> Request Appointment</button>
+            <div id="bookSuccess" style="display:none;margin-top:16px;padding:16px;background:var(--green-100);border-radius:8px;color:#166534">
+              <i class="fas fa-check-circle"></i> Appointment request submitted! We'll confirm your slot shortly.
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (page === 'chat') {
+      innerHTML = `
+        <div style="max-width:600px;margin:60px auto;padding:0 24px">
+          <h1 style="font-size:36px;font-weight:800;margin-bottom:8px">Chat with the Clinic</h1>
+          <p style="color:var(--gray-500);margin-bottom:32px">Send a message to Nairobi Dental Care. A staff member will respond during clinic hours.</p>
+          <div class="card" style="padding:32px">
+            <div class="form-group"><label>Your Name</label><input type="text" id="chatName" placeholder="Your full name" /></div>
+            <div class="form-group"><label>Phone Number</label><input type="tel" id="chatPhone" placeholder="+254 7XX XXX XXX" /></div>
+            <div class="form-group"><label>Your Message</label><textarea id="chatMsg" placeholder="Type your message here..." rows="4"></textarea></div>
+            <button class="btn btn-primary" onclick="DentalAI.submitChat()"><i class="fas fa-comment"></i> Send Message</button>
+            <div id="chatSuccess" style="display:none;margin-top:16px;padding:16px;background:var(--green-100);border-radius:8px;color:#166534">
+              <i class="fas fa-check-circle"></i> Your message has been sent. The clinic will respond within 24 hours.
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    content.innerHTML = innerHTML;
+    wrapper.appendChild(content);
+
+    // Footer
+    const footer = ce('footer', 'landing-footer');
+    footer.innerHTML = `
+      <div class="footer-links">
+        <a href="#" onclick="DentalAI.navigate('landing')">Home</a>
+        <a href="#" onclick="DentalAI.navigate('contact')">Contact Us</a>
+        <a href="#" onclick="DentalAI.navigate('chat')">Chat with Clinic</a>
+        <a href="#" onclick="DentalAI.navigate('book-appointment')">Book Appointment</a>
+        <a href="#" onclick="DentalAI.navigate('privacy')">Privacy Policy</a>
+        <a href="#" onclick="DentalAI.navigate('terms')">Terms & Conditions</a>
+      </div>
+      <p>© 2026 DentalAI. Built in Kenya.</p>
+    `;
+    wrapper.appendChild(footer);
+
+    return wrapper;
   }
 
   // ============================================================
@@ -88,7 +205,6 @@ const DentalAI = (() => {
   function renderLanding() {
     const page = ce('div', 'landing-page');
 
-    // Navbar
     const nav = ce('nav', 'landing-nav');
     nav.innerHTML = `
       <div class="nav-logo"><span>Dental</span>AI</div>
@@ -104,7 +220,6 @@ const DentalAI = (() => {
     `;
     page.appendChild(nav);
 
-    // Hero
     const hero = ce('div', 'hero');
     hero.innerHTML = `
       <div class="hero-content">
@@ -124,7 +239,6 @@ const DentalAI = (() => {
     `;
     page.appendChild(hero);
 
-    // Features section
     const featuresSection = ce('div', 'section', 'features');
     featuresSection.innerHTML = `
       <div class="section-label">Features</div>
@@ -157,15 +271,14 @@ const DentalAI = (() => {
           <p>Get AI-powered insights, draft SMS messages, and analyze clinic performance.</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
-          <h3>Analytics</h3>
-          <p>View revenue trends, appointment patterns, and patient growth at a glance.</p>
+          <div class="feature-icon"><i class="fas fa-comments"></i></div>
+          <h3>Patient Communication</h3>
+          <p>Contact forms, live chat, and two-way SMS to keep in touch with your patients.</p>
         </div>
       </div>
     `;
     page.appendChild(featuresSection);
 
-    // Pricing section
     const pricingSection = ce('div', 'section', 'pricing');
     pricingSection.innerHTML = `
       <div class="section-label">Pricing</div>
@@ -196,7 +309,7 @@ const DentalAI = (() => {
             <li><i class="fas fa-check"></i> M-Pesa billing</li>
             <li><i class="fas fa-check"></i> SMS + Email reminders</li>
             <li><i class="fas fa-check"></i> AI Assistant access</li>
-            <li><i class="fas fa-check"></i> Advanced analytics</li>
+            <li><i class="fas fa-check"></i> Patient communication tools</li>
           </ul>
           <button class="btn btn-primary" style="width:100%" onclick="DentalAI.navigate('register')">Get Started</button>
         </div>
@@ -218,13 +331,15 @@ const DentalAI = (() => {
     `;
     page.appendChild(pricingSection);
 
-    // Footer
+    // Footer with patient links
     const footer = ce('footer', 'landing-footer');
     footer.innerHTML = `
       <div class="footer-links">
+        <a href="#" onclick="DentalAI.navigate('contact')">Contact Us</a>
+        <a href="#" onclick="DentalAI.navigate('chat')">Chat with Clinic</a>
+        <a href="#" onclick="DentalAI.navigate('book-appointment')">Book Appointment</a>
         <a href="#" onclick="DentalAI.navigate('privacy')">Privacy Policy</a>
         <a href="#" onclick="DentalAI.navigate('terms')">Terms & Conditions</a>
-        <a href="mailto:privacy@dentalai.co.ke">Contact</a>
       </div>
       <p>© 2026 DentalAI. Built in Kenya.</p>
     `;
@@ -418,11 +533,11 @@ const DentalAI = (() => {
       { page: 'patients', icon: 'fa-users', label: 'Patients' },
       { page: 'billing', icon: 'fa-coins', label: 'Billing' },
       { page: 'campaigns', icon: 'fa-megaphone', label: 'Campaigns' },
+      { page: 'messages', icon: 'fa-inbox', label: 'Messages' },
       { page: 'ai-assistant', icon: 'fa-robot', label: 'AI Assistant' },
       { page: 'settings', icon: 'fa-cog', label: 'Settings' },
     ];
 
-    // Sidebar
     const sidebar = ce('div', 'sidebar');
     let sidebarHTML = `<div class="sidebar-logo"><span>D</span>entalAI</div><nav class="sidebar-nav">`;
     sidebarItems.forEach(item => {
@@ -435,18 +550,17 @@ const DentalAI = (() => {
     sidebar.innerHTML = sidebarHTML;
     page.appendChild(sidebar);
 
-    // Main content
     const main = ce('div', 'main-content');
-
     const today = new Date();
     const dateStr = today.toLocaleDateString('en-KE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-    // Top bar
-    const topBar = ce('div', 'top-bar');
     const pageTitles = {
       dashboard: 'Dashboard', appointments: 'Appointments', patients: 'Patients',
-      billing: 'Billing', campaigns: 'Campaigns', 'ai-assistant': 'AI Assistant', settings: 'Settings'
+      billing: 'Billing', campaigns: 'Campaigns', messages: 'Messages',
+      'ai-assistant': 'AI Assistant', settings: 'Settings'
     };
+
+    const topBar = ce('div', 'top-bar');
     topBar.innerHTML = `
       <div class="top-bar-left">
         <h2>${pageTitles[activePage] || 'Dashboard'}</h2>
@@ -456,19 +570,21 @@ const DentalAI = (() => {
         <div style="position:relative">
           <button class="notification-bell" onclick="this.nextElementSibling.classList.toggle('show')">
             <i class="fas fa-bell"></i>
-            <span class="notification-badge">3</span>
+            <span class="notification-badge">${notificationCount}</span>
           </button>
           <div class="notifications-panel">
             <div class="notif-item"><div class="notif-title">New appointment booked</div><div class="notif-time">2 min ago</div></div>
             <div class="notif-item"><div class="notif-title">M-Pesa payment received</div><div class="notif-time">15 min ago</div></div>
             <div class="notif-item"><div class="notif-title">SMS reminder sent</div><div class="notif-time">1 hour ago</div></div>
+            ${messages.filter(m => m.status === 'new').slice(0, 2).map(m => `
+              <div class="notif-item"><div class="notif-title">New message from ${m.name}</div><div class="notif-time">via ${m.source}</div></div>
+            `).join('')}
           </div>
         </div>
       </div>
     `;
     main.appendChild(topBar);
 
-    // Page content
     const content = ce('div', 'page-content');
 
     switch (activePage) {
@@ -476,8 +592,9 @@ const DentalAI = (() => {
       case 'appointments': content.appendChild(renderAppointments()); break;
       case 'patients': content.appendChild(renderPatients()); break;
       case 'billing': content.appendChild(renderBilling()); break;
-      case 'ai-assistant': content.appendChild(renderAIAssistant()); break;
       case 'campaigns': content.appendChild(renderCampaigns()); break;
+      case 'messages': content.appendChild(renderMessages()); break;
+      case 'ai-assistant': content.appendChild(renderAIAssistant()); break;
       case 'settings': content.appendChild(renderSettings()); break;
     }
 
@@ -492,9 +609,9 @@ const DentalAI = (() => {
 
   function renderDashboardHome() {
     const wrapper = ce('div');
-
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    const newMsgCount = messages.filter(m => m.status === 'new').length;
 
     wrapper.innerHTML = `
       <div class="greeting">${greeting}, Dr. Kamau 👋</div>
@@ -517,9 +634,9 @@ const DentalAI = (() => {
           <div class="stat-label">Revenue This Month</div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:#FEE2E2;color:var(--red-500)"><i class="fas fa-file-invoice"></i></div>
-          <div class="stat-value">3</div>
-          <div class="stat-label">Pending Bills</div>
+          <div class="stat-icon" style="background:#FEE2E2;color:var(--red-500)"><i class="fas fa-envelope"></i></div>
+          <div class="stat-value">${newMsgCount}</div>
+          <div class="stat-label">New Messages</div>
         </div>
       </div>
 
@@ -543,12 +660,12 @@ const DentalAI = (() => {
         </div>
 
         <div class="card">
-          <div class="card-header"><h3>Recent Patients</h3></div>
+          <div class="card-header"><h3>Recent Messages</h3></div>
           <div class="card-body">
-            ${patients.slice(0, 5).map(p => `
-              <div class="patient-list-item">
-                <span class="patient-name">${p.name}</span>
-                <span class="patient-date">${p.lastVisit}</span>
+            ${messages.slice(0, 4).map(m => `
+              <div class="patient-list-item" style="cursor:pointer" onclick="DentalAI.navigate('messages')">
+                <span class="patient-name">${m.name} <span style="font-size:11px;color:var(--gray-400)">· ${m.source}</span></span>
+                <span class="patient-date" style="${m.status === 'new' ? 'color:var(--primary-blue);font-weight:600' : ''}">${m.status === 'new' ? 'New' : 'Read'}</span>
               </div>
             `).join('')}
           </div>
@@ -565,7 +682,6 @@ const DentalAI = (() => {
 
   function renderAppointments() {
     const wrapper = ce('div');
-
     wrapper.innerHTML = `
       <div class="flex-between mb-24">
         <div class="calendar-nav">
@@ -612,7 +728,6 @@ const DentalAI = (() => {
         </div>
       </div>
     `;
-
     return wrapper;
   }
 
@@ -622,7 +737,6 @@ const DentalAI = (() => {
 
   function renderPatients() {
     const wrapper = ce('div');
-
     wrapper.innerHTML = `
       <div class="flex-between mb-24">
         <div class="search-bar" style="margin-bottom:0">
@@ -630,7 +744,6 @@ const DentalAI = (() => {
         </div>
         <button class="btn btn-primary" onclick="DentalAI.showModal('patient')"><i class="fas fa-plus"></i> Add Patient</button>
       </div>
-
       <div class="card">
         <div class="card-body">
           <table class="table" id="patientsTable">
@@ -650,30 +763,34 @@ const DentalAI = (() => {
         </div>
       </div>
     `;
-
     return wrapper;
   }
 
   // ============================================================
-  // BILLING PAGE
+  // BILLING PAGE with SMS simulation
   // ============================================================
+
+  let billingToast = null;
 
   function renderBilling() {
     const wrapper = ce('div');
+    const totalCollected = invoices.filter(i => i.status === 'paid').reduce((sum, i) => sum + parseInt(i.amount.replace(/[^0-9]/g, '')), 0);
+    const totalPending = invoices.filter(i => i.status === 'pending').reduce((sum, i) => sum + parseInt(i.amount.replace(/[^0-9]/g, '')), 0);
+    const totalOverdue = invoices.filter(i => i.status === 'overdue').reduce((sum, i) => sum + parseInt(i.amount.replace(/[^0-9]/g, '')), 0);
 
     wrapper.innerHTML = `
       <div class="billing-summary">
         <div class="billing-summary-card">
           <div class="bs-label">Total Collected</div>
-          <div class="bs-value" style="color:var(--green-500)">KES 48,200</div>
+          <div class="bs-value" style="color:var(--green-500)">KES ${totalCollected.toLocaleString()}</div>
         </div>
         <div class="billing-summary-card">
           <div class="bs-label">Pending</div>
-          <div class="bs-value" style="color:var(--yellow-500)">KES 7,500</div>
+          <div class="bs-value" style="color:var(--yellow-500)">KES ${totalPending.toLocaleString()}</div>
         </div>
         <div class="billing-summary-card">
           <div class="bs-label">Overdue</div>
-          <div class="bs-value" style="color:var(--red-500)">KES 2,000</div>
+          <div class="bs-value" style="color:var(--red-500)">KES ${totalOverdue.toLocaleString()}</div>
         </div>
       </div>
 
@@ -685,11 +802,17 @@ const DentalAI = (() => {
       <div class="card">
         <div class="card-body">
           <table class="table">
-            <thead><tr><th>Invoice #</th><th>Patient</th><th>Treatment</th><th>Amount</th><th>Payment</th><th>Status</th><th>Date</th></tr></thead>
+            <thead><tr><th>Invoice #</th><th>Patient</th><th>Treatment</th><th>Amount</th><th>Payment</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
             <tbody>
               ${invoices.map(inv => {
                 const badgeClass = inv.status === 'paid' ? 'badge-green' : inv.status === 'pending' ? 'badge-yellow' : 'badge-red';
                 const mpesaBadge = inv.method === 'M-Pesa' ? '<span class="mpesa-badge"><i class="fas fa-mobile-alt"></i> M-Pesa</span>' : 'Cash';
+                let actionBtn = '';
+                if (inv.status === 'pending' || inv.status === 'overdue') {
+                  actionBtn = `<button class="btn btn-sm btn-primary" onclick="DentalAI.markAsPaid('${inv.id}')">Mark Paid</button>`;
+                } else if (inv.status === 'paid') {
+                  actionBtn = `<button class="btn btn-sm btn-outline" onclick="DentalAI.sendReceipt('${inv.id}')"><i class="fas fa-receipt"></i> Send Receipt</button>`;
+                }
                 return `<tr>
                   <td style="font-weight:600">${inv.id}</td>
                   <td>${inv.patient}</td>
@@ -698,15 +821,254 @@ const DentalAI = (() => {
                   <td>${mpesaBadge}</td>
                   <td><span class="badge ${badgeClass}">${inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}</span></td>
                   <td>${inv.date}</td>
+                  <td>${actionBtn}</td>
                 </tr>`;
               }).join('')}
             </tbody>
           </table>
         </div>
       </div>
+      <div id="billingToast" style="display:none"></div>
     `;
-
     return wrapper;
+  }
+
+  function markAsPaid(invoiceId) {
+    const inv = invoices.find(i => i.id === invoiceId);
+    if (inv) {
+      inv.status = 'paid';
+      showToast(`✅ Payment received from ${inv.patient}. SMS confirmation sent via M-Pesa.`);
+      renderBillingPage();
+    }
+  }
+
+  function sendReceipt(invoiceId) {
+    const inv = invoices.find(i => i.id === invoiceId);
+    if (inv) {
+      showToast(`📱 Receipt for ${inv.id} (${inv.amount}) sent to ${inv.patient}'s phone.`);
+    }
+  }
+
+  function showToast(msg) {
+    const existing = document.querySelector('.toast-notification');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--deep-blue);color:white;padding:16px 24px;border-radius:12px;font-size:14px;z-index:9999;box-shadow:var(--shadow-xl);animation:fadeIn 0.3s ease';
+    toast.innerHTML = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3500);
+  }
+
+  function renderBillingPage() {
+    const content = document.querySelector('.page-content');
+    if (content) {
+      content.innerHTML = '';
+      content.appendChild(renderBilling());
+    }
+  }
+
+  // ============================================================
+  // MESSAGES / INBOX PAGE
+  // ============================================================
+
+  function renderMessages() {
+    const wrapper = ce('div');
+    const newCount = messages.filter(m => m.status === 'new').length;
+
+    wrapper.innerHTML = `
+      <div class="flex-between mb-24">
+        <div>
+          <h3 style="font-size:18px;font-weight:700">Inbox</h3>
+          <p style="font-size:14px;color:var(--gray-500)">${messages.length} total · ${newCount} unread</p>
+        </div>
+        <div class="gap-12" style="display:flex">
+          <span class="badge badge-blue">Contact Form</span>
+          <span class="badge badge-green">Chat</span>
+          <span class="badge badge-yellow">SMS</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <table class="table" id="messagesTable">
+            <thead><tr><th>Date</th><th>Patient</th><th>Source</th><th>Message</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+              ${messages.map(m => {
+                const sourceBadge = m.source === 'Contact Form' ? 'badge-blue' : m.source === 'Chat' ? 'badge-green' : 'badge-yellow';
+                return `<tr>
+                  <td style="font-size:13px">${m.date}</td>
+                  <td style="font-weight:600">${m.name}<br><span style="font-size:12px;color:var(--gray-400)">${m.phone}</span></td>
+                  <td><span class="badge ${sourceBadge}">${m.source}</span></td>
+                  <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.message}</td>
+                  <td><span class="badge ${m.status === 'new' ? 'badge-yellow' : 'badge-green'}">${m.status === 'new' ? 'New' : 'Read'}</span></td>
+                  <td>
+                    <button class="btn btn-sm btn-primary" onclick="DentalAI.viewMessage(${m.id})" style="margin-right:4px"><i class="fas fa-eye"></i></button>
+                    ${!m.reply ? `<button class="btn btn-sm btn-outline" onclick="DentalAI.replyToMessage(${m.id})"><i class="fas fa-reply"></i></button>` : `<span style="font-size:12px;color:var(--green-500)"><i class="fas fa-check"></i> Replied</span>`}
+                  </td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div id="messageModalContainer"></div>
+    `;
+    return wrapper;
+  }
+
+  function viewMessage(id) {
+    const m = messages.find(msg => msg.id === id);
+    if (!m) return;
+    if (m.status === 'new') {
+      m.status = 'read';
+      notificationCount = messages.filter(msg => msg.status === 'new').length + 3;
+    }
+    const container = document.getElementById('messageModalContainer') || document.body;
+    const overlay = ce('div', 'modal-overlay');
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `
+      <div class="modal" style="max-width:550px">
+        <h3>Message from ${m.name}</h3>
+        <div style="margin-bottom:20px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+            <div><span style="font-size:13px;color:var(--gray-500)">Phone</span><div style="font-weight:600">${m.phone}</div></div>
+            <div><span style="font-size:13px;color:var(--gray-500)">Source</span><div><span class="badge ${m.source === 'Contact Form' ? 'badge-blue' : m.source === 'Chat' ? 'badge-green' : 'badge-yellow'}">${m.source}</span></div></div>
+            ${m.email ? `<div style="grid-column:span 2"><span style="font-size:13px;color:var(--gray-500)">Email</span><div>${m.email}</div></div>` : ''}
+            <div style="grid-column:span 2"><span style="font-size:13px;color:var(--gray-500)">Date</span><div>${m.date}</div></div>
+          </div>
+          <div style="background:var(--gray-50);padding:16px;border-radius:8px;border-left:3px solid var(--primary-blue)">
+            <div style="font-size:13px;color:var(--gray-500);margin-bottom:8px">Message:</div>
+            ${m.message}
+          </div>
+          ${m.reply ? `
+            <div style="background:#EFF6FF;padding:16px;border-radius:8px;border-left:3px solid var(--green-500);margin-top:12px">
+              <div style="font-size:13px;color:var(--gray-500);margin-bottom:8px">Your Reply:</div>
+              ${m.reply}
+            </div>
+          ` : ''}
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Close</button>
+          ${!m.reply ? `<button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove();DentalAI.replyToMessage(${m.id})"><i class="fas fa-reply"></i> Reply</button>` : ''}
+        </div>
+      </div>
+    `;
+    container.appendChild(overlay);
+  }
+
+  function replyToMessage(id) {
+    const m = messages.find(msg => msg.id === id);
+    if (!m) return;
+    const overlay = ce('div', 'modal-overlay');
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `
+      <div class="modal">
+        <h3>Reply to ${m.name}</h3>
+        <div style="background:var(--gray-50);padding:12px;border-radius:8px;margin-bottom:16px;font-size:14px">
+          <strong>Original message:</strong><br>${m.message}
+        </div>
+        <div class="form-group">
+          <label>Your Reply</label>
+          <textarea id="replyText" rows="4" placeholder="Type your reply..." style="width:100%;padding:12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:14px"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+          <button class="btn btn-primary" onclick="DentalAI.sendReply(${id})"><i class="fas fa-paper-plane"></i> Send Reply</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('messageModalContainer').appendChild(overlay);
+  }
+
+  function sendReply(id) {
+    const textarea = document.getElementById('replyText');
+    if (!textarea || !textarea.value.trim()) return;
+    const m = messages.find(msg => msg.id === id);
+    if (m) {
+      m.reply = textarea.value.trim();
+      m.status = 'read';
+      notificationCount = messages.filter(msg => msg.status === 'new').length + 3;
+    }
+    // Close all overlays
+    document.querySelectorAll('.modal-overlay').forEach(el => el.remove());
+    showToast(`✅ Reply sent to ${m.name}`);
+    navigate('messages');
+  }
+
+  // ============================================================
+  // CONTACT / CHAT / BOOKING SUBMISSIONS
+  // ============================================================
+
+  function submitContact() {
+    const name = document.getElementById('contactName');
+    const email = document.getElementById('contactEmail');
+    const phone = document.getElementById('contactPhone');
+    const msg = document.getElementById('contactMsg');
+    if (!name || !name.value.trim() || !msg || !msg.value.trim()) return;
+
+    messages.unshift({
+      id: messages.length + 1,
+      name: name.value.trim(),
+      email: email.value.trim(),
+      phone: phone.value.trim() || 'N/A',
+      message: msg.value.trim(),
+      date: new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' }),
+      source: 'Contact Form',
+      status: 'new',
+      reply: null
+    });
+    notificationCount = messages.filter(m => m.status === 'new').length + 3;
+    document.getElementById('contactSuccess').style.display = 'block';
+    name.value = ''; email.value = ''; phone.value = ''; msg.value = '';
+    showToast('📨 Message sent! Check your inbox in the dashboard.');
+  }
+
+  function submitBooking() {
+    const name = document.getElementById('bookName');
+    const phone = document.getElementById('bookPhone');
+    const date = document.getElementById('bookDate');
+    const time = document.getElementById('bookTime');
+    const treatment = document.getElementById('bookTreatment');
+    if (!name || !name.value.trim() || !phone || !phone.value.trim()) return;
+
+    const msg = `Appointment request: ${treatment ? treatment.value : 'Check-up'} on ${date ? date.value : 'TBC'} at ${time ? time.value : 'TBC'}`;
+    messages.unshift({
+      id: messages.length + 1,
+      name: name.value.trim(),
+      phone: phone.value.trim(),
+      message: msg,
+      date: new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' }),
+      source: 'Contact Form',
+      status: 'new',
+      reply: null
+    });
+    notificationCount = messages.filter(m => m.status === 'new').length + 3;
+    document.getElementById('bookSuccess').style.display = 'block';
+    name.value = ''; phone.value = ''; if(date) date.value = ''; if(time) time.value = '';
+    showToast('📅 Appointment requested! Check Messages in dashboard.');
+  }
+
+  function submitChat() {
+    const name = document.getElementById('chatName');
+    const phone = document.getElementById('chatPhone');
+    const msg = document.getElementById('chatMsg');
+    if (!name || !name.value.trim() || !msg || !msg.value.trim()) return;
+
+    messages.unshift({
+      id: messages.length + 1,
+      name: name.value.trim(),
+      phone: phone.value.trim() || 'N/A',
+      message: msg.value.trim(),
+      date: new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' }),
+      source: 'Chat',
+      status: 'new',
+      reply: null
+    });
+    notificationCount = messages.filter(m => m.status === 'new').length + 3;
+    document.getElementById('chatSuccess').style.display = 'block';
+    name.value = ''; phone.value = ''; msg.value = '';
+    showToast('💬 Message sent! The clinic will respond within 24 hours.');
   }
 
   // ============================================================
@@ -719,33 +1081,20 @@ const DentalAI = (() => {
   let showConsentGate = true;
 
   function renderAIAssistant() {
-    // If emergency was detected, show emergency screen
     if (state.emergencyDetected) {
       return renderEmergencyAlert();
     }
 
     const wrapper = ce('div', 'ai-page');
-
-    // Conversations sidebar
     const conv = ce('div', 'ai-conversations');
     conv.innerHTML = `
       <h4>Conversations</h4>
-      <div class="ai-conv-item active">
-        Today's Chat
-        <div class="conv-date">March 2026</div>
-      </div>
-      <div class="ai-conv-item">
-        Cancellation Analysis
-        <div class="conv-date">Feb 2026</div>
-      </div>
-      <div class="ai-conv-item">
-        Patient Follow-ups
-        <div class="conv-date">Jan 2026</div>
-      </div>
+      <div class="ai-conv-item active">Today's Chat<div class="conv-date">March 2026</div></div>
+      <div class="ai-conv-item">Cancellation Analysis<div class="conv-date">Feb 2026</div></div>
+      <div class="ai-conv-item">Patient Follow-ups<div class="conv-date">Jan 2026</div></div>
     `;
     wrapper.appendChild(conv);
 
-    // Chat area
     const chat = ce('div', 'ai-chat');
     const messagesDiv = ce('div', 'ai-chat-messages');
 
@@ -764,7 +1113,6 @@ const DentalAI = (() => {
     footer.innerHTML = `⚠️ DentalAI is a Clinical Decision Support Tool only. It does not provide medical diagnoses or prescriptions. All clinical decisions remain the sole responsibility of the licensed dental practitioner. In case of emergency (uncontrolled bleeding, airway swelling, lockjaw), call 0800 720 571 (Kenya Emergency) immediately.`;
     chat.appendChild(footer);
 
-    // Input area
     const inputArea = ce('div', 'ai-input-area');
     inputArea.innerHTML = `
       <input type="text" placeholder="Type your message..." id="aiInput" />
@@ -773,7 +1121,6 @@ const DentalAI = (() => {
     chat.appendChild(inputArea);
     wrapper.appendChild(chat);
 
-    // Add sample suggestions
     const aiContainer = ce('div');
     aiContainer.appendChild(wrapper);
 
@@ -797,7 +1144,6 @@ const DentalAI = (() => {
     `;
     aiContainer.appendChild(suggestions);
 
-    // Add consent gate overlay if needed
     if (showConsentGate) {
       const overlay = renderConsentGate();
       aiContainer.appendChild(overlay);
@@ -892,7 +1238,7 @@ const DentalAI = (() => {
   }
 
   // ============================================================
-  // SETTINGS PAGE
+  // SETTINGS PAGE with SMS Settings
   // ============================================================
 
   function renderSettings() {
@@ -904,15 +1250,29 @@ const DentalAI = (() => {
           <div class="form-group"><label>Clinic Name</label><input type="text" value="Nairobi Dental Care" /></div>
           <div class="form-group"><label>Email</label><input type="email" value="info@nairobidental.co.ke" /></div>
           <div class="form-group"><label>Phone</label><input type="tel" value="+254 700 123 456" /></div>
-          <button class="btn btn-primary">Save Changes</button>
+          <button class="btn btn-primary" onclick="DentalAI.showToast('✅ Clinic profile updated')">Save Changes</button>
         </div>
       </div>
-      <div class="card">
+      <div class="card" style="margin-bottom:24px">
         <div class="card-header"><h3>M-Pesa Integration</h3></div>
         <div class="card-body" style="padding:24px">
           <div class="form-group"><label>M-Pesa Business Number</label><input type="text" value="247XXX" /></div>
           <div class="form-group"><label>M-Pesa Paybill/Till</label><input type="text" value="123456" /></div>
-          <button class="btn btn-primary">Update</button>
+          <button class="btn btn-primary" onclick="DentalAI.showToast('✅ M-Pesa settings updated')">Update</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>SMS Settings</h3></div>
+        <div class="card-body" style="padding:24px">
+          <div class="form-group"><label>SMS Sender ID</label><input type="text" value="DentalAI" id="smsSenderId" /></div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+            <label class="checkbox-label" style="border:none;padding:0">
+              <input type="checkbox" checked id="smsAutoReply" />
+              <span class="check-box"><i class="fas fa-check"></i></span>
+              Enable auto-reply confirmations
+            </label>
+          </div>
+          <button class="btn btn-primary" onclick="DentalAI.showToast('✅ SMS settings saved')">Save SMS Settings</button>
         </div>
       </div>
     `;
@@ -930,53 +1290,43 @@ const DentalAI = (() => {
       page.innerHTML = `
         <h1>DentalAI Patient Privacy Policy</h1>
         <p class="legal-date">Effective Date: 1 January 2026</p>
-
         <h2>1. Who We Are</h2>
         <p>DentalAI is operated by [Company Name], a data processor registered with the Office of the Data Protection Commissioner (ODPC) of Kenya under Registration No. [ODPC-REG-XXXXX], pursuant to the Data Protection Act, No. 24 of 2019.</p>
-
         <h2>2. Data We Collect</h2>
         <p>We collect: full name, date of birth, gender, phone number, email address, dental history, symptom descriptions, appointment records, billing information, and device/usage metadata.</p>
-
         <h2>3. Lawful Basis for Processing</h2>
         <p>We process your sensitive personal data — including health data — solely on the basis of your explicit, documented, and freely given consent, as required under Section 32 of the Data Protection Act (2019). Consent is obtained via dual-checkbox confirmation and OTP verification prior to any AI interaction. You may withdraw consent at any time by contacting privacy@dentalai.co.ke.</p>
-
         <h2>4. Data Localization</h2>
         <p>All patient health data collected through DentalAI is stored exclusively on servers physically located within the Republic of Kenya. No health data is transferred outside Kenya's borders without prior written authorization from the ODPC and explicit patient consent, in strict compliance with Section 48 of the Data Protection Act (2019) and the Digital Health Act (2023).</p>
-
         <h2>5. Patient Rights</h2>
         <p>Under the Data Protection Act (2019), you have the right to:</p>
         <ul>
           <li><strong>(a) Access:</strong> Request a copy of all personal data we hold about you.</li>
           <li><strong>(b) Rectification:</strong> Require correction of any inaccurate or incomplete data.</li>
           <li><strong>(c) Erasure:</strong> Request deletion of your data where there is no lawful basis for continued processing.</li>
-          <li><strong>(d) Objection to Automated Decision-Making:</strong> Under Section 35 of the DPA (2019), you have the right to object to any decision made solely by automated means, including AI-generated triage suggestions, that significantly affects you. All AI outputs are reviewed by a licensed dental practitioner before any clinical action is taken.</li>
+          <li><strong>(d) Objection to Automated Decision-Making:</strong> Under Section 35 of the DPA (2019), you have the right to object to any decision made solely by automated means, including AI-generated triage suggestions, that significantly affects you.</li>
         </ul>
-        <p>To exercise any right, email: privacy@dentalai.co.ke or write to: Data Protection Officer, DentalAI, [Physical Address], Nairobi, Kenya.</p>
-
+        <p>To exercise any right, email: privacy@dentalai.co.ke</p>
         <h2>6. Data Retention & Disposal</h2>
-        <p>Patient health records are retained for a minimum of five (5) years following the last patient interaction, in accordance with the Medical Practitioners and Dentists Act (Cap. 253) and guidelines issued by the Kenya Medical Practitioners and Dentists Council (KMPDC). Upon expiry of the retention period, data is permanently deleted using NIST 800-88-compliant digital erasure protocols. Physical storage media is destroyed via certified e-waste disposal in accordance with the Environmental Management and Coordination Act.</p>
+        <p>Patient health records are retained for a minimum of five (5) years following the last patient interaction. Upon expiry, data is permanently deleted using NIST 800-88-compliant erasure protocols.</p>
       `;
     } else {
       page.innerHTML = `
         <h1>DentalAI Clinic Services Agreement</h1>
         <p class="legal-date">Effective Date: 1 January 2026</p>
-
         <h2>CLAUSE 4 — NATURE OF SERVICE & MEDICAL LIABILITY INDEMNIFICATION</h2>
-        <p><strong>4.1</strong> DentalAI is a Clinical Decision Support Tool (CDST). It is not a registered medical practitioner, dentist, or specialist under the Medical Practitioners and Dentists Act (Cap. 253) of Kenya, and does not hold a licence issued by the Kenya Medical Practitioners and Dentists Council (KMPDC).</p>
-        <p><strong>4.2</strong> All outputs generated by DentalAI — including but not limited to symptom triage suggestions, appointment prioritisation recommendations, and clinical summary drafts — are informational aids only. They do not constitute a medical diagnosis, clinical opinion, or prescription as defined under Kenyan law.</p>
-        <p><strong>4.3</strong> The Clinic, represented by its licensed dental practitioner(s), retains sole, absolute, and non-delegable clinical and legal liability for all diagnostic, treatment, and prescribing decisions made in connection with patient care, whether or not DentalAI outputs were consulted.</p>
-        <p><strong>4.4</strong> The Clinic shall indemnify and hold harmless DentalAI, its directors, officers, employees, and agents from any claim, liability, loss, damage, or expense (including legal fees) arising from the Clinic's reliance on DentalAI outputs as a substitute for professional clinical judgment.</p>
-
+        <p><strong>4.1</strong> DentalAI is a Clinical Decision Support Tool (CDST). It is not a registered medical practitioner, dentist, or specialist under the Medical Practitioners and Dentists Act (Cap. 253) of Kenya.</p>
+        <p><strong>4.2</strong> All outputs generated by DentalAI are informational aids only. They do not constitute a medical diagnosis, clinical opinion, or prescription as defined under Kenyan law.</p>
+        <p><strong>4.3</strong> The Clinic retains sole, absolute, and non-delegable clinical and legal liability for all diagnostic, treatment, and prescribing decisions.</p>
+        <p><strong>4.4</strong> The Clinic shall indemnify and hold harmless DentalAI from any claim arising from reliance on DentalAI outputs as a substitute for professional clinical judgment.</p>
         <h2>CLAUSE 7 — DATA PROCESSING AGREEMENT</h2>
-        <p><strong>7.1</strong> For the purposes of the Data Protection Act, No. 24 of 2019, the Clinic is designated as the Data Controller in respect of all patient personal data processed through the DentalAI platform.</p>
-        <p><strong>7.2</strong> DentalAI [Company Name] is designated as the Data Processor, processing personal data solely on the documented instructions of the Clinic and for no other purpose.</p>
-        <p><strong>7.3</strong> DentalAI shall implement appropriate technical and organisational measures to ensure a level of security appropriate to the risk, including end-to-end encryption of data in transit and at rest, role-based access controls, and regular third-party penetration testing.</p>
-        <p><strong>7.4</strong> DentalAI shall notify the Clinic within seventy-two (72) hours of becoming aware of any personal data breach, in compliance with Section 43 of the Data Protection Act (2019), and shall provide all reasonable assistance to the Clinic in fulfilling its breach notification obligations to the ODPC.</p>
-
+        <p><strong>7.1</strong> The Clinic is the Data Controller. DentalAI is the Data Processor, processing data solely on the documented instructions of the Clinic.</p>
+        <p><strong>7.2</strong> DentalAI shall implement appropriate technical and organisational measures including end-to-end encryption, role-based access controls, and regular penetration testing.</p>
+        <p><strong>7.3</strong> DentalAI shall notify the Clinic within 72 hours of becoming aware of any personal data breach, in compliance with Section 43 of the Data Protection Act (2019).</p>
         <h2>CLAUSE 9 — SYSTEM DOWNTIME & EMERGENCY MEDICAL DISCLAIMER</h2>
-        <p><strong>9.1</strong> DentalAI does not guarantee uninterrupted availability of the platform. Scheduled maintenance windows will be communicated to the Clinic no less than forty-eight (48) hours in advance.</p>
-        <p><strong>9.2</strong> The Clinic acknowledges and agrees that DentalAI must not, under any circumstances, be used as the primary or sole tool for the assessment or management of life-threatening maxillo-facial emergencies, including but not limited to: Ludwig's angina, retropharyngeal abscess, uncontrolled post-extraction haemorrhage, or oro-facial trauma with airway compromise. Such conditions require immediate referral to a licensed emergency medical facility.</p>
-        <p><strong>9.3</strong> DentalAI accepts no liability for harm arising from the use of the platform in emergency clinical scenarios.</p>
+        <p><strong>9.1</strong> DentalAI does not guarantee uninterrupted availability. Maintenance windows will be communicated 48 hours in advance.</p>
+        <p><strong>9.2</strong> DentalAI must not be used as the primary tool for life-threatening maxillo-facial emergencies including Ludwig's angina, uncontrolled post-extraction haemorrhage, or airway compromise.</p>
+        <p><strong>9.3</strong> DentalAI accepts no liability for harm arising from use in emergency clinical scenarios.</p>
       `;
     }
 
@@ -1099,7 +1449,6 @@ const DentalAI = (() => {
     const text = input.value.trim();
     input.value = '';
 
-    // Check for emergency keywords
     const lowerText = text.toLowerCase();
     const hasEmergency = EMERGENCY_KEYWORDS.some(kw => lowerText.includes(kw.toLowerCase()));
 
@@ -1109,18 +1458,13 @@ const DentalAI = (() => {
       return;
     }
 
-    // Add user message
     aiMessages.push({ role: 'user', text });
-    // Generate AI response
     const response = generateAIResponse(text);
     aiMessages.push({ role: 'ai', text: response });
-
-    // Re-render the AI page
     navigate('ai-assistant');
   }
 
   function sendQuickQuery(query) {
-    // Check for emergency keywords
     const lowerText = query.toLowerCase();
     const hasEmergency = EMERGENCY_KEYWORDS.some(kw => lowerText.includes(kw.toLowerCase()));
 
@@ -1149,25 +1493,22 @@ Please arrive 10 minutes early. To reschedule or confirm, reply to this message 
 
     if (q.includes('cancellation') || q.includes('most cancellations')) {
       return `📊 <strong>Cancellation Analysis — March 2026</strong><br><br>
-Based on your appointment data, here's the breakdown:<br><br>
-• <strong>Mondays</strong> had the most cancellations (4) — likely due to "Monday blues" and weekend overflow.<br>
-• <strong>Fridays</strong> follow closely with 3 cancellations, possibly from patients extending weekends.<br>
-• <strong>Wednesday</strong> had the fewest cancellations (1).<br><br>
-💡 <strong>Recommendation:</strong> Consider sending double reminders (SMS + call) for Monday and Friday appointments to reduce no-shows.`;
+• <strong>Mondays</strong> had the most cancellations (4)<br>
+• <strong>Fridays</strong> follow closely with 3 cancellations<br>
+• <strong>Wednesday</strong> had the fewest cancellations (1)<br><br>
+💡 <strong>Recommendation:</strong> Send double reminders (SMS + call) for Monday and Friday appointments.`;
     }
 
-    if (q.includes('follow-up') || q.includes('haven\'t visited')) {
+    if (q.includes('follow-up') || q.includes("haven't visited")) {
       return `📨 <strong>Follow-up Draft</strong><br><br>
 Hi [Patient Name],<br><br>
-It's been a while since your last visit to Nairobi Dental Care! We'd love to see you for a routine check-up. Did you know that regular check-ups can prevent up to 80% of dental issues?<br><br>
-📅 <strong>Book now</strong> and receive 10% off your next cleaning.<br>
-Call us at +254 700 123 456 or reply to this message to schedule.<br><br>
-We look forward to seeing you! 🦷<br>
-— Dr. Kamau & The Nairobi Dental Care Team`;
+It's been a while since your last visit! Regular check-ups can prevent up to 80% of dental issues.<br><br>
+📅 Book now and receive 10% off your next cleaning.<br>
+Call us at +254 700 123 456<br><br>
+— Dr. Kamau & The Nairobi Dental Care Team 🦷`;
     }
 
-    // Default response
-    return `Thank you for your query. Based on your current clinic data, I'd recommend reviewing your appointment schedule and patient records in the dashboard for detailed insights. If you need help with SMS drafts, cancellation analysis, or follow-up suggestions, feel free to ask!`;
+    return `Thank you for your query. Based on your clinic data, I'd recommend reviewing your appointment schedule and patient records in the dashboard for detailed insights. Need help with SMS drafts, cancellation analysis, or follow-up suggestions?`;
   }
 
   // ============================================================
@@ -1180,7 +1521,6 @@ We look forward to seeing you! 🦷<br>
     el.classList.toggle('checked');
     const checkbox = el.querySelector('input');
     checkbox.checked = !checkbox.checked;
-
     if (num === 1) state.consentCheck1 = checkbox.checked;
     if (num === 2) state.consentCheck2 = checkbox.checked;
     checkConsent();
@@ -1190,10 +1530,8 @@ We look forward to seeing you! 🦷<br>
     const btn = document.getElementById('confirmConsentBtn');
     const otp = document.getElementById('otpInput');
     if (!btn || !otp) return;
-
     state.consentOtp = otp.value;
-    const otpValid = otp.value.length === 6;
-    btn.disabled = !(state.consentCheck1 && state.consentCheck2 && otpValid);
+    btn.disabled = !(state.consentCheck1 && state.consentCheck2 && otp.value.length === 6);
   }
 
   function confirmConsent() {
@@ -1201,10 +1539,6 @@ We look forward to seeing you! 🦷<br>
     if (overlay) overlay.remove();
     showConsentGate = false;
   }
-
-  // ============================================================
-  // EMERGENCY & UTILITY FUNCTIONS
-  // ============================================================
 
   function resetEmergency() {
     state.emergencyDetected = false;
@@ -1214,6 +1548,10 @@ We look forward to seeing you! 🦷<br>
     showConsentGate = true;
     navigate('ai-assistant');
   }
+
+  // ============================================================
+  // MISC UTILITY FUNCTIONS
+  // ============================================================
 
   function nextOnboardingStep() {
     if (state.onboardingStep < 3) {
@@ -1234,23 +1572,20 @@ We look forward to seeing you! 🦷<br>
   }
 
   function showPatientProfile(id) {
-    // Navigate to patients page, then show the profile inline
-    const wrapper = ce('div');
-    wrapper.appendChild(renderPatientProfile(id));
-    const app = document.getElementById('app');
-    app.innerHTML = '';
-    app.className = 'fade-in';
-
-    // Build full dashboard page with sidebar
     const sidebarItems = [
       { page: 'patients', icon: 'fa-users', label: 'Patients' },
       { page: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
       { page: 'appointments', icon: 'fa-calendar-check', label: 'Appointments' },
       { page: 'billing', icon: 'fa-coins', label: 'Billing' },
       { page: 'campaigns', icon: 'fa-megaphone', label: 'Campaigns' },
+      { page: 'messages', icon: 'fa-inbox', label: 'Messages' },
       { page: 'ai-assistant', icon: 'fa-robot', label: 'AI Assistant' },
       { page: 'settings', icon: 'fa-cog', label: 'Settings' },
     ];
+
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+    app.className = 'fade-in';
 
     const page = ce('div', 'dashboard-page');
     let sidebarHTML = `<div class="sidebar"><div class="sidebar-logo"><span>D</span>entalAI</div><nav class="sidebar-nav">`;
@@ -1269,7 +1604,7 @@ We look forward to seeing you! 🦷<br>
       <div class="top-bar-right">
         <span class="top-bar-date">${new Date().toLocaleDateString('en-KE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
         <div style="position:relative">
-          <button class="notification-bell"><i class="fas fa-bell"></i><span class="notification-badge">3</span></button>
+          <button class="notification-bell"><i class="fas fa-bell"></i><span class="notification-badge">${notificationCount}</span></button>
         </div>
       </div>
     `;
@@ -1298,7 +1633,6 @@ We look forward to seeing you! 🦷<br>
 
   function init() {
     render();
-    // Handle nav anchor clicks for smooth scrolling
     document.addEventListener('click', (e) => {
       const anchor = e.target.closest('a[data-nav]');
       if (anchor) {
@@ -1315,6 +1649,7 @@ We look forward to seeing you! 🦷<br>
     navigate,
     nextOnboardingStep,
     showModal,
+    showToast,
     sendAIMessage,
     sendQuickQuery,
     toggleConsent,
@@ -1323,15 +1658,17 @@ We look forward to seeing you! 🦷<br>
     resetEmergency,
     filterPatients,
     showPatientProfile,
+    submitContact,
+    submitBooking,
+    submitChat,
+    viewMessage,
+    replyToMessage,
+    sendReply,
+    markAsPaid,
+    sendReceipt,
     init,
   };
 
 })();
 
-// Initialize on DOM ready
-document.addEventListener('DOMContentLoaded', () => DentalAI.init());/home/engine/.bashrc: line 1: syntax error near unexpected token `('
-/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
-/home/engine/.bashrc: line 1: syntax error near unexpected token `('
-/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
-/home/engine/.bashrc: line 1: syntax error near unexpected token `('
-/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+document.addEventListener('DOMContentLoaded', () => DentalAI.init());
