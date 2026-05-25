@@ -52,7 +52,77 @@ const DentalAI = (() => {
     { id: 5, name: 'Jane Wanjeri', phone: '+254 756 999 000', message: 'How much does a teeth whitening procedure cost?', date: '20 Mar 2026', source: 'Chat', status: 'read', reply: 'Hi Jane, our whitening procedure is KES 8,000. We offer a 10% discount for first-time patients. - Dr. Kamau' },
   ];
 
-  let notificationCount = messages.filter(m => m.status === 'new').length + 3; // 3 existing + new messages
+  let notificationCount = messages.filter(m => m.status === 'new').length + 3;
+
+  // ---------- Inventory Data ----------
+  let inventoryItems = [
+    { id: 1, name: 'Latex Gloves', category: 'consumables', stock: 120, unit: 'boxes', reorder: 50, lastRestocked: '20 Mar 2026', supplier: 'MediSupplies Kenya' },
+    { id: 2, name: 'Composite Resin', category: 'equipment', stock: 15, unit: 'units', reorder: 20, lastRestocked: '15 Mar 2026', supplier: 'DentalMart Ltd' },
+    { id: 3, name: 'Lidocaine Cartridges', category: 'medication', stock: 200, unit: 'units', reorder: 50, lastRestocked: '10 Mar 2026', supplier: 'PharmaK Ltd' },
+    { id: 4, name: 'Dental Bibs', category: 'consumables', stock: 30, unit: 'packs', reorder: 40, lastRestocked: '05 Mar 2026', supplier: 'MediSupplies Kenya' },
+    { id: 5, name: 'Sterilisation Pouches', category: 'consumables', stock: 8, unit: 'packs', reorder: 25, lastRestocked: '28 Feb 2026', supplier: 'SteriCo' },
+    { id: 6, name: 'X-Ray Films', category: 'equipment', stock: 45, unit: 'packs', reorder: 30, lastRestocked: '20 Feb 2026', supplier: 'DentalMart Ltd' },
+    { id: 7, name: 'Disposable Mirrors', category: 'consumables', stock: 60, unit: 'boxes', reorder: 20, lastRestocked: '15 Feb 2026', supplier: 'MediSupplies Kenya' },
+    { id: 8, name: 'Amalgam Capsules', category: 'medication', stock: 5, unit: 'units', reorder: 15, lastRestocked: '10 Feb 2026', supplier: 'PharmaK Ltd' },
+  ];
+
+  // ---------- Staff Data ----------
+  let staffMembers = [
+    { id: 1, name: 'Dr. Grace Muthoni', role: 'Dentist', phone: '+254 712 111 111', email: 'grace@clinic.co.ke', shift: 'Full Day', status: 'Active', patientsMonth: 42, procedures: { Cleaning: 18, Extraction: 8, Filling: 10, Whitening: 4, Consultation: 12 } },
+    { id: 2, name: 'Dr. Peter Kimani', role: 'Dentist', phone: '+254 723 222 222', email: 'peter@clinic.co.ke', shift: 'Morning', status: 'Active', patientsMonth: 35, procedures: { Cleaning: 12, Extraction: 6, Filling: 8, Whitening: 3, Consultation: 8 } },
+    { id: 3, name: 'Mary Wanjiku', role: 'Dental Nurse', phone: '+254 734 333 333', email: 'mary@clinic.co.ke', shift: 'Full Day', status: 'Active', patientsMonth: 0, procedures: {} },
+    { id: 4, name: 'James Ochieng', role: 'Receptionist', phone: '+254 745 444 444', email: 'james@clinic.co.ke', shift: 'Afternoon', status: 'Active', patientsMonth: 0, procedures: {} },
+    { id: 5, name: 'Sarah Nyambura', role: 'Admin', phone: '+254 756 555 555', email: 'sarah@clinic.co.ke', shift: 'Full Day', status: 'On Leave', patientsMonth: 0, procedures: {} },
+  ];
+
+  const COMMISSION_RATES = { Cleaning: 300, Extraction: 500, Filling: 400, Whitening: 800, Consultation: 200 };
+
+  // ---------- SHA Claims Data ----------
+  let shaClaims = [
+    { id: 'SHA-001', patient: 'Grace Wanjiku', amount: 'KES 2,500', date: '12 Mar 2026', status: 'approved' },
+    { id: 'SHA-002', patient: 'Peter Kiplagat', amount: 'KES 1,500', date: '05 Mar 2026', status: 'under-review' },
+    { id: 'SHA-003', patient: 'David Mwangi', amount: 'KES 4,000', date: '28 Feb 2026', status: 'rejected' },
+  ];
+
+  // ---------- Campaign Data ----------
+  let campaigns = [
+    { id: 1, name: 'March Check-up Drive', type: 'Promotion', audience: 240, sentDate: '15 Mar 2026', status: 'Sent', delivered: 182, opened: 133, optOuts: 2 },
+    { id: 2, name: 'Overdue Visit Reminder', type: 'Re-engagement', audience: 86, sentDate: '10 Mar 2026', status: 'Sent', delivered: 72, opened: 48, optOuts: 1 },
+    { id: 3, name: 'Easter Promo 2026', type: 'Promotion', audience: 310, sentDate: '01 Mar 2026', status: 'Sent', delivered: 298, opened: 201, optOuts: 4 },
+    { id: 4, name: 'Recall: 6-month check', type: 'Appointment Reminder', audience: 134, sentDate: '25 Feb 2026', status: 'Sent', delivered: 118, opened: 89, optOuts: 0 },
+  ];
+
+  // ---------- All 47 Kenyan Counties ----------
+  const KENYAN_COUNTIES = [
+    'Baringo','Bomet','Bungoma','Busia','Elgeyo Marakwet','Embu','Garissa','Homa Bay','Isiolo','Kajiado',
+    'Kakamega','Kericho','Kiambu','Kilifi','Kirinyaga','Kisii','Kisumu','Kitui','Kwale','Laikipia','Lamu',
+    'Machakos','Makueni','Mandera','Marsabit','Meru','Migori','Mombasa','Muranga','Nairobi','Nakuru','Nandi',
+    'Narok','Nyamira','Nyandarua','Nyeri','Samburu','Siaya','Taita Taveta','Tana River','Tharaka Nithi',
+    'Trans Nzoia','Turkana','Uasin Gishu','Vihiga','Wajir','West Pokot'
+  ];
+
+  // ---------- Validation Helpers ----------
+  function validateKenyanPhone(phone) {
+    const cleaned = phone.replace(/[\s\+\-]/g, '');
+    return /^(?:(?:\+?254|0)[17]\d{8})$/.test(cleaned) || /^0[17]\d{8}$/.test(cleaned);
+  }
+  function validateEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+  function isFutureDate(dateStr) { return new Date(dateStr) > new Date(new Date().toDateString()); }
+  function isPositiveNumber(n) { return !isNaN(n) && parseFloat(n) > 0; }
+
+  // ---------- Global Error Handler ----------
+  window.onerror = function(msg, url, line) {
+    const toast = document.querySelector('.toast-notification');
+    if (!toast) {
+      const t = document.createElement('div');
+      t.className = 'toast-notification';
+      t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--red-500);color:white;padding:16px 24px;border-radius:12px;font-size:14px;z-index:9999;box-shadow:var(--shadow-xl)';
+      t.innerHTML = '⚠️ Something went wrong. <button onclick="this.parentElement.remove()" style="margin-left:12px;background:white;color:var(--red-500);border:none;padding:4px 12px;border-radius:4px;font-weight:600;cursor:pointer">Retry</button>';
+      document.body.appendChild(t);
+      setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 5000);
+    }
+    return true;
+  };
 
   // ---------- Emergency Keywords ----------
   const EMERGENCY_KEYWORDS = [
@@ -90,12 +160,33 @@ const DentalAI = (() => {
       case 'appointments': app.appendChild(renderDashboardLayout('appointments')); break;
       case 'patients': app.appendChild(renderDashboardLayout('patients')); break;
       case 'billing': app.appendChild(renderDashboardLayout('billing')); break;
+      case 'inventory': app.appendChild(renderDashboardLayout('inventory')); break;
+      case 'staff': app.appendChild(renderDashboardLayout('staff')); break;
       case 'campaigns': app.appendChild(renderDashboardLayout('campaigns')); break;
       case 'messages': app.appendChild(renderDashboardLayout('messages')); break;
       case 'ai-assistant': app.appendChild(renderDashboardLayout('ai-assistant')); break;
       case 'settings': app.appendChild(renderDashboardLayout('settings')); break;
-      default: app.appendChild(renderLanding());
+      case '404': app.appendChild(render404()); break;
+      default: app.appendChild(render404());
     }
+  }
+
+  // ============================================================
+  // 404 PAGE
+  // ============================================================
+
+  function render404() {
+    const page = ce('div', 'auth-page');
+    const card = ce('div', 'auth-card');
+    card.style.textAlign = 'center';
+    card.innerHTML = `
+      <div style="font-size:72px;font-weight:900;color:var(--primary-blue);margin-bottom:8px">404</div>
+      <h2 style="font-size:24px;margin-bottom:8px">Page not found</h2>
+      <p style="color:var(--gray-500);margin-bottom:24px">The page you're looking for doesn't exist.</p>
+      <button class="btn btn-primary btn-lg" onclick="DentalAI.navigate('dashboard')"><i class="fas fa-arrow-left"></i> Go to Dashboard</button>
+    `;
+    page.appendChild(card);
+    return page;
   }
 
   // ============================================================
@@ -271,9 +362,19 @@ const DentalAI = (() => {
           <p>Get AI-powered insights, draft SMS messages, and analyze clinic performance.</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon"><i class="fas fa-comments"></i></div>
-          <h3>Patient Communication</h3>
-          <p>Contact forms, live chat, and two-way SMS to keep in touch with your patients.</p>
+          <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+          <h3>Analytics</h3>
+          <p>View revenue trends, appointment patterns, and patient growth at a glance.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-boxes"></i></div>
+          <h3>Inventory Tracking</h3>
+          <p>Track dental supplies, set reorder levels, and get low-stock alerts automatically.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-user-md"></i></div>
+          <h3>Staff Management</h3>
+          <p>Manage your team, track shifts, commissions, and performance all in one place.</p>
         </div>
       </div>
     `;
@@ -532,6 +633,8 @@ const DentalAI = (() => {
       { page: 'appointments', icon: 'fa-calendar-check', label: 'Appointments' },
       { page: 'patients', icon: 'fa-users', label: 'Patients' },
       { page: 'billing', icon: 'fa-coins', label: 'Billing' },
+      { page: 'inventory', icon: 'fa-boxes', label: 'Inventory' },
+      { page: 'staff', icon: 'fa-user-md', label: 'Staff' },
       { page: 'campaigns', icon: 'fa-megaphone', label: 'Campaigns' },
       { page: 'messages', icon: 'fa-inbox', label: 'Messages' },
       { page: 'ai-assistant', icon: 'fa-robot', label: 'AI Assistant' },
@@ -556,7 +659,8 @@ const DentalAI = (() => {
 
     const pageTitles = {
       dashboard: 'Dashboard', appointments: 'Appointments', patients: 'Patients',
-      billing: 'Billing', campaigns: 'Campaigns', messages: 'Messages',
+      billing: 'Billing', inventory: 'Inventory', staff: 'Staff',
+      campaigns: 'Campaigns', messages: 'Messages',
       'ai-assistant': 'AI Assistant', settings: 'Settings'
     };
 
@@ -592,6 +696,8 @@ const DentalAI = (() => {
       case 'appointments': content.appendChild(renderAppointments()); break;
       case 'patients': content.appendChild(renderPatients()); break;
       case 'billing': content.appendChild(renderBilling()); break;
+      case 'inventory': content.appendChild(renderInventory()); break;
+      case 'staff': content.appendChild(renderStaff()); break;
       case 'campaigns': content.appendChild(renderCampaigns()); break;
       case 'messages': content.appendChild(renderMessages()); break;
       case 'ai-assistant': content.appendChild(renderAIAssistant()); break;
@@ -1218,26 +1324,251 @@ const DentalAI = (() => {
   // ============================================================
   // CAMPAIGNS PAGE
   // ============================================================
+  // ============================================================
+  // INVENTORY PAGE
+  // ============================================================
 
-  function renderCampaigns() {
+  function renderInventory() {
     const wrapper = ce('div');
+    const lowStock = inventoryItems.filter(i => i.stock <= i.reorder).length;
+    const today = new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' });
     wrapper.innerHTML = `
-      <div class="card">
-        <div class="card-header">
-          <h3>SMS Campaigns</h3>
-          <button class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> New Campaign</button>
-        </div>
-        <div class="card-body" style="padding:32px;text-align:center;color:var(--gray-500)">
-          <i class="fas fa-megaphone" style="font-size:48px;color:var(--gray-300);margin-bottom:16px"></i>
-          <p style="font-size:16px;font-weight:600;color:var(--gray-600);margin-bottom:8px">No campaigns yet</p>
-          <p>Create your first SMS campaign to reach your patients.</p>
-        </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px">
+        <div class="billing-summary-card"><div class="bs-label">Total Items</div><div class="bs-value" style="font-size:24px">${inventoryItems.length}</div></div>
+        <div class="billing-summary-card"><div class="bs-label">Low Stock Alerts</div><div class="bs-value" style="font-size:24px;color:var(--red-500)">${lowStock}</div></div>
+        <div class="billing-summary-card"><div class="bs-label">Last Updated</div><div class="bs-value" style="font-size:24px">${today}</div></div>
       </div>
-    `;
+      <div class="flex-between mb-24">
+        <h3 style="font-size:16px;font-weight:700">Dental Supplies</h3>
+        <button class="btn btn-primary" onclick="DentalAI.showModal('inventory')"><i class="fas fa-plus"></i> Add Item</button>
+      </div>
+      <div class="card"><div class="card-body">
+          <table class="table">
+            <thead><tr><th>Item</th><th>Category</th><th>Stock</th><th>Unit</th><th>Reorder Level</th><th>Last Restocked</th><th>Supplier</th><th>Action</th></tr></thead>
+            <tbody>
+              ${inventoryItems.map(item => {
+                const isLow = item.stock <= item.reorder;
+                const catBadge = item.category === 'consumables' ? 'badge-blue' : item.category === 'equipment' ? 'badge-green' : 'badge-yellow';
+                return `<tr>
+                  <td style="font-weight:600">${item.name}</td>
+                  <td><span class="badge ${catBadge}">${item.category}</span></td>
+                  <td style="font-weight:700;color:${isLow ? 'var(--red-500)' : 'inherit'}">${item.stock}</td>
+                  <td>${item.unit}</td>
+                  <td>${item.reorder}</td>
+                  <td>${item.lastRestocked}</td>
+                  <td>${item.supplier}</td>
+                  <td>${isLow ? '<span class="badge badge-red" style="margin-right:4px">Low Stock</span>' : ''}<button class="btn btn-sm btn-outline" onclick="DentalAI.restockItem(${item.id})"><i class="fas fa-plus"></i> Restock</button></td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
     return wrapper;
   }
 
+  function restockItem(id) {
+    const item = inventoryItems.find(i => i.id === id);
+    if (!item) return;
+    const overlay = ce('div', 'modal-overlay');
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `<div class="modal"><h3>Restock: ${item.name}</h3>
+      <div style="margin-bottom:16px;background:var(--gray-50);padding:12px;border-radius:8px;font-size:14px">Current Stock: <strong>${item.stock}</strong> ${item.unit}</div>
+      <div class="form-group"><label>Quantity to Add</label><input type="number" id="restockQty" min="1" value="10" /></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+        <button class="btn btn-primary" onclick="DentalAI.confirmRestock(${id})"><i class="fas fa-check"></i> Confirm</button>
+      </div></div>`;
+    document.getElementById('app').appendChild(overlay);
+  }
+
+  function confirmRestock(id) {
+    const qty = parseInt(document.getElementById('restockQty')?.value);
+    const item = inventoryItems.find(i => i.id === id);
+    if (!item || !qty || qty < 1) { showToast('⚠️ Please enter a valid quantity.'); return; }
+    item.stock += qty;
+    item.lastRestocked = new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' });
+    document.querySelectorAll('.modal-overlay').forEach(el => el.remove());
+    showToast(`✅ Restocked ${qty} ${item.unit} of ${item.name}`);
+    navigate('inventory');
+  }
+
   // ============================================================
+  // STAFF PAGE
+  // ============================================================
+
+  function renderStaff() {
+    const wrapper = ce('div');
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat'];
+    wrapper.innerHTML = `
+      <div class="flex-between mb-24">
+        <h3 style="font-size:16px;font-weight:700">Staff Members</h3>
+        <button class="btn btn-primary" onclick="DentalAI.showModal('staff')"><i class="fas fa-plus"></i> Add Staff</button>
+      </div>
+      <div class="card" style="margin-bottom:24px">
+        <div class="card-header"><h3>All Staff</h3></div>
+        <div class="card-body">
+          <table class="table">
+            <thead><tr><th>Name</th><th>Role</th><th>Phone</th><th>Email</th><th>Shift</th><th>Status</th></tr></thead>
+            <tbody>
+              ${staffMembers.map(s => {
+                const roleBadge = s.role === 'Dentist' ? 'badge-blue' : s.role === 'Dental Nurse' ? 'badge-green' : s.role === 'Receptionist' ? 'badge-yellow' : 'badge';
+                return `<tr style="cursor:pointer" onclick="DentalAI.showStaffProfile(${s.id})">
+                  <td style="font-weight:600">${s.name}</td>
+                  <td><span class="badge ${roleBadge}">${s.role}</span></td>
+                  <td>${s.phone}</td>
+                  <td>${s.email}</td>
+                  <td>${s.shift}</td>
+                  <td><span class="badge ${s.status === 'Active' ? 'badge-green' : 'badge-red'}">${s.status}</span></td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Shift Schedule — This Week</h3></div>
+        <div class="card-body">
+          <table class="table">
+            <thead><tr><th>Staff</th>${days.map(d => `<th>${d}</th>`).join('')}</thead>
+            <tbody>
+              ${staffMembers.filter(s => s.status === 'Active').map(s => `<tr><td style="font-weight:600">${s.name.split(' ').slice(-1)[0]}</td>${days.map(() => `<td>${s.shift}</td>`).join('')}</tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    return wrapper;
+  }
+
+  function showStaffProfile(id) {
+    const s = staffMembers.find(st => st.id === id);
+    if (!s) return;
+    const totalEarned = s.procedures ? Object.entries(s.procedures).reduce((sum, [proc, count]) => sum + (COMMISSION_RATES[proc] || 0) * count, 0) : 0;
+    const totalProcedures = s.procedures ? Object.values(s.procedures).reduce((a, b) => a + b, 0) : 0;
+    const overlay = ce('div', 'modal-overlay');
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `<div class="modal" style="max-width:500px"><h3>${s.name}</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+        <div><span style="font-size:12px;color:var(--gray-500)">Role</span><div style="font-weight:600">${s.role}</div></div>
+        <div><span style="font-size:12px;color:var(--gray-500)">Shift</span><div style="font-weight:600">${s.shift}</div></div>
+        <div><span style="font-size:12px;color:var(--gray-500)">Phone</span><div>${s.phone}</div></div>
+        <div><span style="font-size:12px;color:var(--gray-500)">Status</span><div><span class="badge ${s.status === 'Active' ? 'badge-green' : 'badge-red'}">${s.status}</span></div></div>
+      </div>
+      <div style="background:var(--gray-50);padding:16px;border-radius:8px;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:600;margin-bottom:8px">Commission Tracker — This Month</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+          <div>Patients handled: <strong>${s.patientsMonth || 0}</strong></div>
+          <div>Procedures: <strong>${totalProcedures}</strong></div>
+          <div style="grid-column:span 2;font-size:18px;font-weight:800;color:var(--green-500);margin-top:8px">KES ${totalEarned.toLocaleString()} earned</div>
+        </div>
+      </div>
+      <div class="modal-actions"><button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Close</button></div>
+    </div>`;
+    document.getElementById('app').appendChild(overlay);
+  }
+
+  // ============================================================
+  // CAMPAIGNS PAGE
+  // ============================================================
+
+  let campaignStep = 1;
+  let newCampaignData = {};
+
+  function renderCampaigns() {
+    const wrapper = ce('div');
+    const totalDelivered = campaigns.reduce((s, c) => s + (c.delivered || 0), 0);
+    const totalOpened = campaigns.reduce((s, c) => s + (c.opened || 0), 0);
+    const totalOptOuts = campaigns.reduce((s, c) => s + (c.optOuts || 0), 0);
+    wrapper.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
+        <div class="billing-summary-card"><div class="bs-label">Campaigns Sent</div><div class="bs-value" style="font-size:22px">${campaigns.length}</div></div>
+        <div class="billing-summary-card"><div class="bs-label">Delivered</div><div class="bs-value" style="font-size:22px">${totalDelivered}</div></div>
+        <div class="billing-summary-card"><div class="bs-label">Open Rate</div><div class="bs-value" style="font-size:22px">${totalDelivered ? Math.round(totalOpened/totalDelivered*100) : 0}%</div></div>
+        <div class="billing-summary-card"><div class="bs-label">Opt-Outs</div><div class="bs-value" style="font-size:22px;color:var(--red-500)">${totalOptOuts}</div></div>
+      </div>
+      <div class="flex-between mb-24">
+        <h3 style="font-size:16px;font-weight:700">Campaigns</h3>
+        <button class="btn btn-primary" onclick="DentalAI.startCampaign()"><i class="fas fa-plus"></i> New Campaign</button>
+      </div>
+      <div class="card"><div class="card-body">
+          <table class="table">
+            <thead><tr><th>Campaign</th><th>Type</th><th>Audience</th><th>Sent</th><th>Status</th><th>Report</th></tr></thead>
+            <tbody>${campaigns.map(c => {
+              const typeBadge = c.type === 'Appointment Reminder' ? 'badge-blue' : c.type === 'Re-engagement' ? 'badge-yellow' : 'badge-green';
+              return `<tr><td style="font-weight:600">${c.name}</td><td><span class="badge ${typeBadge}">${c.type}</span></td><td>${c.audience}</td><td>${c.sentDate}</td><td><span class="badge badge-green">${c.status}</span></td><td><button class="btn btn-sm btn-outline" onclick="DentalAI.viewCampaignReport(${c.id})"><i class="fas fa-chart-bar"></i> Report</button></td></tr>`;
+            }).join('')}</tbody>
+          </table>
+        </div>
+      </div>`;
+    return wrapper;
+  }
+
+  function startCampaign() { campaignStep = 1; newCampaignData = {}; renderCampaignWizard(); }
+
+  function renderCampaignWizard() {
+    const overlay = ce('div', 'modal-overlay');
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    overlay.id = 'campaignWizard';
+    let html = '<div class="modal" style="max-width:550px">';
+    if (campaignStep === 1) {
+      html += `<h3>Step 1: Campaign Details</h3><p style="color:var(--gray-500);margin-bottom:16px;font-size:14px">Choose type and audience.</p>
+        <div class="form-group"><label>Campaign Name</label><input type="text" id="campName" placeholder="e.g. April Promo" /></div>
+        <div class="form-group"><label>Type</label><select id="campType"><option>Appointment Reminder</option><option>Re-engagement</option><option>Promotion</option></select></div>
+        <div class="form-group"><label>Audience</label><select id="campAudience"><option>All Patients</option><option>Patients not seen in 3+ months</option><option>Patients with pending bills</option></select></div>
+        <div class="modal-actions"><button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button><button class="btn btn-primary" onclick="DentalAI.campaignNext()">Next <i class="fas fa-arrow-right"></i></button></div>`;
+    } else if (campaignStep === 2) {
+      html += `<h3>Step 2: Compose Message</h3><p style="color:var(--gray-500);margin-bottom:16px;font-size:14px">Write your WhatsApp message.</p>
+        <div class="form-group"><label>Message <span id="charCount" style="font-weight:400;color:var(--gray-400)">(0 chars)</span></label>
+        <textarea id="campMessage" rows="4" placeholder="Type your message..." style="width:100%;padding:12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:14px" oninput="document.getElementById('charCount').textContent='('+this.value.length+' chars)';document.getElementById('phonePreview').innerHTML=this.value.replace(/\\n/g,'<br>')||'<span style=\"color:#999\">Preview...</span>'"></textarea></div>
+        <div style="background:#f0f5f0;border-radius:12px;padding:16px;max-width:260px;margin:0 auto 16px">
+          <div style="font-size:12px;color:var(--gray-500);margin-bottom:6px"><i class="fas fa-mobile-alt"></i> Phone Preview</div>
+          <div style="background:#e8f5e9;padding:12px;border-radius:8px;font-size:13px;line-height:1.5" id="phonePreview"><span style="color:#999">Preview...</span></div>
+        </div>
+        <p style="font-size:11px;color:var(--gray-400);margin-bottom:12px">Messages sent via Africa's Talking WhatsApp API.</p>
+        <div class="modal-actions"><button class="btn btn-outline" onclick="DentalAI.campaignPrev()"><i class="fas fa-arrow-left"></i> Back</button><button class="btn btn-primary" onclick="DentalAI.campaignNext()">Next <i class="fas fa-arrow-right"></i></button></div>`;
+    } else if (campaignStep === 3) {
+      html += `<h3>Step 3: Schedule</h3><p style="color:var(--gray-500);margin-bottom:16px;font-size:14px">Choose when to send.</p>
+        <div class="form-group"><label>Schedule</label><select id="campSchedule" onchange="document.getElementById('campDatePicker').style.display=this.value==='scheduled'?'block':'none'"><option value="now">Send Now</option><option value="scheduled">Schedule for Later</option></select></div>
+        <div class="form-group" id="campDatePicker" style="display:none"><label>Date & Time</label><input type="datetime-local" id="campDateTime" /></div>
+        <div class="modal-actions"><button class="btn btn-outline" onclick="DentalAI.campaignPrev()"><i class="fas fa-arrow-left"></i> Back</button><button class="btn btn-primary" onclick="DentalAI.confirmCampaign()"><i class="fas fa-check"></i> Confirm & Send</button></div>`;
+    }
+    html += '</div>';
+    overlay.innerHTML = html;
+    document.getElementById('app').appendChild(overlay);
+  }
+
+  function campaignNext() {
+    if (campaignStep === 1) { newCampaignData.name = document.getElementById('campName')?.value || 'Campaign'; newCampaignData.type = document.getElementById('campType')?.value; }
+    if (campaignStep === 2) { const msg = document.getElementById('campMessage'); if (!msg || !msg.value.trim()) { showToast('⚠️ Please write a message.'); return; } newCampaignData.msg = msg.value.trim(); }
+    campaignStep++; document.getElementById('campaignWizard')?.remove(); renderCampaignWizard();
+  }
+  function campaignPrev() { campaignStep--; document.getElementById('campaignWizard')?.remove(); renderCampaignWizard(); }
+
+  function confirmCampaign() {
+    if (document.getElementById('campSchedule')?.value === 'scheduled') {
+      const dt = document.getElementById('campDateTime')?.value;
+      if (!dt || new Date(dt) <= new Date()) { showToast('⚠️ Schedule date cannot be in the past.'); return; }
+    }
+    campaigns.unshift({ id: campaigns.length + 1, name: newCampaignData.name || 'Campaign', type: newCampaignData.type || 'Promotion', audience: 100, sentDate: new Date().toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'}), status: 'Sent', delivered: 0, opened: 0, optOuts: 0 });
+    document.getElementById('campaignWizard')?.remove();
+    showToast('✅ Campaign created!'); navigate('campaigns');
+  }
+
+  function viewCampaignReport(id) {
+    const c = campaigns.find(ca => ca.id === id);
+    if (!c) return;
+    const overlay = ce('div','modal-overlay');
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `<div class="modal" style="max-width:400px"><h3>${c.name}</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0">
+        <div style="background:var(--gray-50);padding:12px;border-radius:8px;text-align:center"><div style="font-size:22px;font-weight:800">${c.delivered||0}</div><div style="font-size:12px;color:var(--gray-500)">Delivered</div></div>
+        <div style="background:var(--gray-50);padding:12px;border-radius:8px;text-align:center"><div style="font-size:22px;font-weight:800">${c.opened||0}</div><div style="font-size:12px;color:var(--gray-500)">Opened</div></div>
+        <div style="background:var(--gray-50);padding:12px;border-radius:8px;text-align:center"><div style="font-size:22px;font-weight:800">${c.optOuts||0}</div><div style="font-size:12px;color:var(--gray-500)">Opt-Outs</div></div>
+        <div style="background:var(--gray-50);padding:12px;border-radius:8px;text-align:center"><div style="font-size:22px;font-weight:800">${c.audience}</div><div style="font-size:12px;color:var(--gray-500)">Audience</div></div>
+      </div>
+      <div class="modal-actions"><button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Close</button></div></div>`;
+    document.getElementById('app').appendChild(overlay);
+  }
   // SETTINGS PAGE with SMS Settings
   // ============================================================
 
@@ -1671,4 +2002,45 @@ Call us at +254 700 123 456<br><br>
 
 })();
 
-document.addEventListener('DOMContentLoaded', () => DentalAI.init());
+document.addEventListener('DOMContentLoaded', () => DentalAI.init());/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
