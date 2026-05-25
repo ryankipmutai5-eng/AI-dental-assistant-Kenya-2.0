@@ -254,7 +254,7 @@ const DentalAI = (() => {
       innerHTML = `
         <div style="max-width:600px;margin:60px auto;padding:0 24px">
           <h1 style="font-size:36px;font-weight:800;margin-bottom:8px">Chat with the Clinic</h1>
-          <p style="color:var(--gray-500);margin-bottom:32px">Send a message to Nairobi Dental Care. A staff member will respond during clinic hours.</p>
+          <p style="color:var(--gray-500);margin-bottom:32px">Send a message to ' + DentalAIConfig.CLINIC_NAME + '. A staff member will respond during clinic hours.</p>
           <div class="card" style="padding:32px">
             <div class="form-group"><label>Your Name</label><input type="text" id="chatName" placeholder="Your full name" /></div>
             <div class="form-group"><label>Phone Number</label><input type="tel" id="chatPhone" placeholder="+254 7XX XXX XXX" /></div>
@@ -482,7 +482,7 @@ const DentalAI = (() => {
         <p class="auth-sub">Start your free trial — no credit card required</p>
         <div class="form-group">
           <label>Clinic Name</label>
-          <input type="text" placeholder="e.g. Nairobi Dental Care" />
+          <input type="text" placeholder="e.g. ' + DentalAIConfig.CLINIC_NAME + '" />
         </div>
         <div class="form-group">
           <label>Doctor's Full Name</label>
@@ -1216,7 +1216,7 @@ const DentalAI = (() => {
     chat.appendChild(messagesDiv);
 
     const footer = ce('div', 'ai-footer');
-    footer.innerHTML = `⚠️ DentalAI is a Clinical Decision Support Tool only. It does not provide medical diagnoses or prescriptions. All clinical decisions remain the sole responsibility of the licensed dental practitioner. In case of emergency (uncontrolled bleeding, airway swelling, lockjaw), call 0800 720 571 (Kenya Emergency) immediately.`;
+    footer.innerHTML = `⚠️ DentalAI is a Clinical Decision Support Tool only. It does not provide medical diagnoses or prescriptions. All clinical decisions remain the sole responsibility of the licensed dental practitioner. In case of emergency (uncontrolled bleeding, airway swelling, lockjaw), call " + DentalAIConfig.EMERGENCY_PHONE + " (Kenya Emergency) immediately.`;
     chat.appendChild(footer);
 
     const inputArea = ce('div', 'ai-input-area');
@@ -1306,11 +1306,11 @@ const DentalAI = (() => {
         <div class="emergency-icon">🚨</div>
         <h2>This sounds like a dental emergency.</h2>
         <p>Please do not wait. Call emergency services immediately.</p>
-        <div class="emergency-number">📞 0800 720 571</div>
+        <div class="emergency-number">📞 " + DentalAIConfig.EMERGENCY_PHONE + "</div>
         <p style="font-size:14px;color:var(--gray-500)">Your clinic has been notified.</p>
         <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
           <button class="btn btn-danger btn-lg" onclick="window.open('tel:0800720571')">
-            <i class="fas fa-phone-alt"></i> Call 0800 720 571
+            <i class="fas fa-phone-alt"></i> Call " + DentalAIConfig.EMERGENCY_PHONE + "
           </button>
           <button class="btn btn-outline" onclick="DentalAI.resetEmergency()">
             <i class="fas fa-undo"></i> Reset Session
@@ -1578,7 +1578,7 @@ const DentalAI = (() => {
       <div class="card" style="margin-bottom:24px">
         <div class="card-header"><h3>Clinic Profile</h3></div>
         <div class="card-body" style="padding:24px">
-          <div class="form-group"><label>Clinic Name</label><input type="text" value="Nairobi Dental Care" /></div>
+          <div class="form-group"><label>Clinic Name</label><input type="text" value="' + DentalAIConfig.CLINIC_NAME + '" /></div>
           <div class="form-group"><label>Email</label><input type="email" value="info@nairobidental.co.ke" /></div>
           <div class="form-group"><label>Phone</label><input type="tel" value="+254 700 123 456" /></div>
           <button class="btn btn-primary" onclick="DentalAI.showToast('✅ Clinic profile updated')">Save Changes</button>
@@ -1817,9 +1817,9 @@ const DentalAI = (() => {
     if (q.includes('sms reminder') || q.includes('draft an sms')) {
       return `📱 <strong>Draft SMS Reminder</strong><br><br>
 Dear Patient,<br><br>
-This is a friendly reminder from Nairobi Dental Care that you have an appointment scheduled for tomorrow, [DATE] at [TIME].<br><br>
+This is a friendly reminder from ' + DentalAIConfig.CLINIC_NAME + ' that you have an appointment scheduled for tomorrow, [DATE] at [TIME].<br><br>
 Please arrive 10 minutes early. To reschedule or confirm, reply to this message or call us at +254 700 123 456.<br><br>
-— Nairobi Dental Care 🦷`;
+— ' + DentalAIConfig.CLINIC_NAME + ' 🦷`;
     }
 
     if (q.includes('cancellation') || q.includes('most cancellations')) {
@@ -1836,7 +1836,7 @@ Hi [Patient Name],<br><br>
 It's been a while since your last visit! Regular check-ups can prevent up to 80% of dental issues.<br><br>
 📅 Book now and receive 10% off your next cleaning.<br>
 Call us at +254 700 123 456<br><br>
-— Dr. Kamau & The Nairobi Dental Care Team 🦷`;
+— Dr. Kamau & The ' + DentalAIConfig.CLINIC_NAME + ' Team 🦷`;
     }
 
     return `Thank you for your query. Based on your clinic data, I'd recommend reviewing your appointment schedule and patient records in the dashboard for detailed insights. Need help with SMS drafts, cancellation analysis, or follow-up suggestions?`;
